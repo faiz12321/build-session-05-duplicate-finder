@@ -1,0 +1,9 @@
+Group 1: 3 files, 46 bytes each
+  work/report-final-OLD.txt
+  work/report-final.txt
+  work/report-v1.txt
+Group 2: 3 files, 44 bytes each
+  downloads/readme.txt
+  holiday/beach copy.txt
+  holiday/beach.txt
+2 group(s) of duplicates. Extra copies use 180 bytes.
