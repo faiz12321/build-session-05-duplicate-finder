@@ -7,7 +7,7 @@ A tiny duplicate file finder built step by step. It compares what is inside file
     python make_sample.py                # makes a practice folder called sample
     python dupfinder.py sample           # lists groups of identical files
     python dupfinder.py sample --min-size 0   # also counts empty files
-    python -m unittest -v                # seven automated tests
+    python -m unittest -v                # eight automated tests
 
 On Windows, if `python` is not found, use `py` instead.
 
