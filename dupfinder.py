@@ -2,6 +2,7 @@
 
 Run: python dupfinder.py FOLDER [--min-size BYTES]
 """
+import filecmp
 import hashlib
 import sys
 from collections import defaultdict
@@ -28,11 +29,33 @@ def file_hash(path, chunk=1024 * 1024):
     return digest.hexdigest()
 
 
+def same_bytes(first, second):
+    """True only if the two files are identical byte for byte."""
+    return filecmp.cmp(first, second, shallow=False)
+
+
+def confirm_groups(paths):
+    """Split paths that share a fingerprint into groups that really match byte for byte.
+
+    A matching SHA-256 is very strong evidence, but this is the final check.
+    """
+    clusters = []
+    for path in paths:
+        for cluster in clusters:
+            if same_bytes(cluster[0], path):
+                cluster.append(path)
+                break
+        else:
+            clusters.append([path])
+    return clusters
+
+
 def find_duplicates(folder, min_size=1):
     """Return (groups, skipped). A group is a list of paths with identical contents.
 
     Files are grouped by size first, because files of different sizes cannot be
-    identical. Only files that share a size are hashed.
+    identical. Only files that share a size are hashed. Files that share a
+    fingerprint are then compared byte for byte before they count as copies.
     """
     by_size = defaultdict(list)
     for path in list_files(folder):
@@ -54,9 +77,12 @@ def find_duplicates(folder, min_size=1):
                 by_hash[file_hash(path)].append(path)
             except OSError as error:
                 skipped.append((path, error.strerror or str(error)))
-        for same in by_hash.values():
-            if len(same) > 1:
-                groups.append((size, sorted(same)))
+        for same_hash in by_hash.values():
+            if len(same_hash) < 2:
+                continue
+            for same in confirm_groups(same_hash):
+                if len(same) > 1:
+                    groups.append((size, sorted(same)))
     groups.sort(key=lambda g: (-g[0], g[1][0]))
     return groups, sorted(skipped)
 
