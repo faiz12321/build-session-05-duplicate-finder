@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import dupfinder
 import make_sample
@@ -53,6 +54,15 @@ class DupFinderTests(unittest.TestCase):
         groups, skipped = dupfinder.find_duplicates(self.root)
         text = dupfinder.report(self.root, groups, skipped)
         self.assertIn("2 group(s) of duplicates. Extra copies use 180 bytes.", text)
+
+    def test_a_fingerprint_clash_is_not_enough(self):
+        # Pretend every file has the same fingerprint. The byte check must still
+        # keep different files apart, so the tool never calls them copies.
+        with mock.patch.object(dupfinder, "file_hash", return_value="same"):
+            groups, _ = dupfinder.find_duplicates(self.root)
+        flat = sum(self.names(groups), [])
+        self.assertNotIn("downloads/same-size-different.txt", flat)
+        self.assertEqual(len(groups), 2)
 
 
 if __name__ == "__main__":
