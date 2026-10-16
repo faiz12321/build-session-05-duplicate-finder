@@ -1,26 +1,43 @@
 # Find duplicate files with a small Python tool
 
-A tiny duplicate file finder built step by step. It compares what is inside files, not their names. It only reads. It never deletes, moves or changes a file.
+Read-only teaching tool that groups files by size, hashes matching-size files,
+then uses byte comparisons for matching hashes. It does not move or delete.
+It does not decide which copy you should keep. Reports reveal file names.
 
-## Run it
+## Practise
 
-    python make_sample.py                # makes a practice folder called sample
-    python dupfinder.py sample           # lists groups of identical files
-    python dupfinder.py sample --min-size 0   # also counts empty files
-    python -m unittest -v                # eight automated tests
+Save the three Python files in a new empty lesson folder. Python 3 is enough:
 
-On Windows, if `python` is not found, use `py` instead.
+    python make_sample.py
+    python dupfinder.py sample
+    python dupfinder.py sample --min-size 0
+    python -m unittest -v
 
-## Files
+Setup creates sample once, exclusively creates fictional practice files and
+refuses any existing sample path. It never resets or replaces old data. Use a
+different new empty folder rather than deleting existing data to force setup.
 
-- `dupfinder.py` - the tool
-- `make_sample.py` - makes made-up practice files
-- `test_dupfinder.py` - tests
-- `expected_output.txt` - the output the lesson shows; the automated check compares against it
+## Evidence and limits
 
-## Notes
+11 tests use temporary fixtures, including setup file/folder collisions,
+repeat-run refusal, nested unrelated data, byte contents and modification-time
+preservation. A fixture hash clash confirms byte comparison separates different
+contents. These fixture passes are not a universal safety proof.
 
-- Uses only what comes with Python 3. Tested on Python 3.10 (Linux) and, by GitHub Actions, Python 3.12 on Windows and Ubuntu. Not tested on a Windows 10 or 11 desktop, a network drive or a very large folder.
-- The practice files are made up. Educational example, no warranty. Use at your own risk, and back up before deleting anything.
-- Code is MIT licensed (see LICENSE). Python is a separate project with its own license; this repository does not include it.
-- The commands, with the real output recorded from a real run, are in the companion practice page: https://faiz12321.github.io/ai-tools-that-work/build-session-05-duplicate-finder.html . Nothing in it runs on your device.
+The checker is unchanged in this setup repair. The lesson first shows a simple
+fingerprint printer, then the final checker, then deliberately reproduces an
+incorrect 128-byte test expectation. The full replacement test corrects this to
+180 bytes. The recorder disables bytecode caching for these quick same-size
+edits. Four recordings use unique temporary folders and preserve actual output,
+including the intentionally failed traceback's temporary path. Paired platform
+runs differ in those paths and unittest time. Displays use the first Windows
+recording, not mixed output. No Windows desktop or macOS session was recorded.
+
+Do not automate deletion from the report. Concurrent file changes, permission
+errors, directory links, network filesystems and very large folders are not
+fully covered. Keep private paths and reports private. expected_output.txt is
+the stable sample report used by CI, not a full session transcript.
+
+## License
+
+MIT, see LICENSE. Python is separately licensed and not included.
