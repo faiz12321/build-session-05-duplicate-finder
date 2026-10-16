@@ -1,43 +1,20 @@
 # Find duplicate files with a small Python tool
 
-Read-only teaching tool that groups files by size, hashes matching-size files,
-then uses byte comparisons for matching hashes. It does not move or delete.
-It does not decide which copy you should keep. Reports reveal file names.
+The final checker groups by size, SHA-256 and uncached chunked byte comparison. It has no write, move, delete or network code. Reports show relative file paths and extra logical file bytes, not guaranteed recoverable physical space. Do not automate deletion.
 
-## Practise
+## Practice
 
-Save the three Python files in a new empty lesson folder. Python 3 is enough:
+Save the three Python files in a NEW empty local lesson folder. Python 3.10+ is enough.
 
     python make_sample.py
     python dupfinder.py sample
     python dupfinder.py sample --min-size 0
     python -m unittest -v
 
-Setup creates sample once, exclusively creates fictional practice files and
-refuses any existing sample path. It never resets or replaces old data. Use a
-different new empty folder rather than deleting existing data to force setup.
+Two Windows and two Ubuntu replays use the exact visible code, including the intentional wrong 128-byte assertion followed by the full corrected 180-byte test replacement. Final test suite is 25 tests, with one Unix-pipe skip on Windows. Symlink tests execute on these recording runners but can skip where unavailable. Both pairs differ in temporary traceback paths and unittest timings; first Windows stdout is displayed, not mixed or rewritten.
+Setup exclusively creates a NEW fictional sample and refuses existing, traversal and linked/reparse-point ancestor paths. No reset/delete. Final checker refuses unsafe input/ancestor/tree links, reparse points, multiply linked files, special entries and traversal. It caps traversal at 10000 entries, but reading files/listing directories still uses memory/time and is not a resource sandbox. Stop editors and sync. This is a best-effort preflight, not hostile-race protection.
+Enumeration/metadata/comparison failures return exit 2 rather than false clean. Hash-read failures produce a visibly incomplete report and nonzero exit. Final byte comparison is chunked and uncached: the regression test catches stale filecmp-style cached comparisons after a same-size edit with restored modification time. Files can still change during a scan; no atomic snapshot is promised.
+The report sums extra logical file bytes. It does not measure physical blocks, compression, sparse files, deduplication or guaranteed recoverable disk space. No deletion recommendation follows from a duplicate group; deciding which file to keep stays yours. Read-only refers to this script's lack of write/move/delete/network code, not the whole OS or sync software. Report paths can be private. Tests use small temporary fixtures, not real user trees or desktop Windows/macOS.
+The first fingerprint-printer prototype is for the fictional sample only. It is not the final safe-path checker. The full final file replaces it before the duplicate report/tests. The recorder disables bytecode caching while editing same-sized source files quickly and removes only its own temporary fixture workspace.
 
-## Evidence and limits
-
-11 tests use temporary fixtures, including setup file/folder collisions,
-repeat-run refusal, nested unrelated data, byte contents and modification-time
-preservation. A fixture hash clash confirms byte comparison separates different
-contents. These fixture passes are not a universal safety proof.
-
-The checker is unchanged in this setup repair. The lesson first shows a simple
-fingerprint printer, then the final checker, then deliberately reproduces an
-incorrect 128-byte test expectation. The full replacement test corrects this to
-180 bytes. The recorder disables bytecode caching for these quick same-size
-edits. Four recordings use unique temporary folders and preserve actual output,
-including the intentionally failed traceback's temporary path. Paired platform
-runs differ in those paths and unittest time. Displays use the first Windows
-recording, not mixed output. No Windows desktop or macOS session was recorded.
-
-Do not automate deletion from the report. Concurrent file changes, permission
-errors, directory links, network filesystems and very large folders are not
-fully covered. Keep private paths and reports private. expected_output.txt is
-the stable sample report used by CI, not a full session transcript.
-
-## License
-
-MIT, see LICENSE. Python is separately licensed and not included.
+MIT code. Python has separate terms and is not included.
