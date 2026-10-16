@@ -18,3 +18,10 @@ The report sums extra logical file bytes. It does not measure physical blocks, c
 The first fingerprint-printer prototype is for the fictional sample only. It is not the final safe-path checker. The full final file replaces it before the duplicate report/tests. The recorder disables bytecode caching while editing same-sized source files quickly and removes only its own temporary fixture workspace.
 
 MIT code. Python has separate terms and is not included.
+
+## Paired recordings
+
+- Windows: https://github.com/faiz12321/lesson-lab/actions/runs/38965897753
+- Ubuntu: https://github.com/faiz12321/lesson-lab/actions/runs/38966031435
+
+Python filesystem reference: https://docs.python.org/3/library/os.html
