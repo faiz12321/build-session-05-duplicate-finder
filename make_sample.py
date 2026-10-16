@@ -1,7 +1,7 @@
 """Creates a small, fixed folder of sample files for practising on.
 
 Run: python make_sample.py
-It makes a folder called sample/ next to this script. Safe to run twice.
+It makes a folder called sample/ next to this script. Refuses any existing sample path. Never resets or replaces it.
 """
 from pathlib import Path
 
@@ -22,14 +22,19 @@ FILES = {
 
 def make(root):
     root = Path(root)
+    root.mkdir()  # Atomic refusal if any file, folder or link already exists.
     for name, text in FILES.items():
         path = root / name
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(text.encode("utf-8"))
+        with path.open("xb") as handle:
+            handle.write(text.encode("utf-8"))
     return len(FILES)
 
 
 if __name__ == "__main__":
     here = Path(__file__).resolve().parent
-    count = make(here / "sample")
+    try:
+        count = make(here / "sample")
+    except FileExistsError:
+        raise SystemExit("Stopped: sample already exists. Nothing was replaced or deleted.")
     print(f"Made {count} files in sample")
