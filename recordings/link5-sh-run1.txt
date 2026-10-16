@@ -1,0 +1,149 @@
+### CMD: python --version
+Python 3.12.3
+### EXIT: 0
+
+### CMD: python make_sample.py
+Made 11 files in sample
+### EXIT: 0
+
+### CMD: python make_sample.py
+Stopped: sample already exists. Nothing was replaced or deleted.
+### EXIT: 1
+
+### CMD: python -c "import pathlib; [print(p.as_posix(), p.stat().st_size) for p in sorted(pathlib.Path('sample').rglob('*')) if p.is_file()]"
+sample/downloads/empty1.txt 0
+sample/downloads/empty2.txt 0
+sample/downloads/readme.txt 44
+sample/downloads/same-size-different.txt 44
+sample/holiday/beach copy.txt 44
+sample/holiday/beach.txt 44
+sample/holiday/packing.txt 38
+sample/work/notes.txt 29
+sample/work/report-final-OLD.txt 46
+sample/work/report-final.txt 46
+sample/work/report-v1.txt 46
+### EXIT: 0
+
+### CMD: python dupfinder.py sample
+e3b0c44298fc sample/downloads/empty1.txt
+e3b0c44298fc sample/downloads/empty2.txt
+a406f3540ee0 sample/downloads/readme.txt
+f0f2f0fac438 sample/downloads/same-size-different.txt
+a406f3540ee0 sample/holiday/beach copy.txt
+a406f3540ee0 sample/holiday/beach.txt
+5104c81bacaf sample/holiday/packing.txt
+60f424c3650a sample/work/notes.txt
+0efe8676783a sample/work/report-final-OLD.txt
+0efe8676783a sample/work/report-final.txt
+0efe8676783a sample/work/report-v1.txt
+### EXIT: 0
+
+### CMD: python dupfinder.py sample
+Group 1: 3 files, 46 bytes each
+  work/report-final-OLD.txt
+  work/report-final.txt
+  work/report-v1.txt
+Group 2: 3 files, 44 bytes each
+  downloads/readme.txt
+  holiday/beach copy.txt
+  holiday/beach.txt
+2 group(s) of duplicates. Extra copies use 180 bytes.
+### EXIT: 0
+
+### CMD: python -m unittest
+..........F..............
+======================================================================
+FAIL: test_wasted_space_in_report (test_dupfinder.DupFinderTests.test_wasted_space_in_report)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/lesson05-link-record-5z9amcrp/test_dupfinder.py", line 87, in test_wasted_space_in_report
+    self.assertIn("2 group(s) of duplicates. Extra copies use 128 bytes.", text)
+AssertionError: '2 group(s) of duplicates. Extra copies use 128 bytes.' not found in 'Group 1: 3 files, 46 bytes each\n  work/report-final-OLD.txt\n  work/report-final.txt\n  work/report-v1.txt\nGroup 2: 3 files, 44 bytes each\n  downloads/readme.txt\n  holiday/beach copy.txt\n  holiday/beach.txt\n2 group(s) of duplicates. Extra copies use 180 bytes.'
+
+----------------------------------------------------------------------
+Ran 25 tests in 0.191s
+
+FAILED (failures=1)
+forced compare failure
+forced error
+Incomplete report: some candidate files could not be read.
+Could not read: downloads/readme.txt (forced read failure)
+Could not read: downloads/same-size-different.txt (forced read failure)
+Could not read: holiday/beach copy.txt (forced read failure)
+Could not read: holiday/beach.txt (forced read failure)
+Could not read: work/report-final-OLD.txt (forced read failure)
+Could not read: work/report-final.txt (forced read failure)
+Could not read: work/report-v1.txt (forced read failure)
+0 group(s) of duplicates. Extra copies use 0 bytes.
+### EXIT: 1
+
+### CMD: python -m unittest -v
+test_a_fingerprint_clash_is_not_enough (test_dupfinder.DupFinderTests.test_a_fingerprint_clash_is_not_enough) ... ok
+test_empty_files_ignored_by_default_and_counted_when_asked (test_dupfinder.DupFinderTests.test_empty_files_ignored_by_default_and_counted_when_asked) ... ok
+test_finds_the_two_groups (test_dupfinder.DupFinderTests.test_finds_the_two_groups) ... ok
+test_missing_folder_is_a_clear_error (test_dupfinder.DupFinderTests.test_missing_folder_is_a_clear_error) ... ok
+test_never_changes_the_files (test_dupfinder.DupFinderTests.test_never_changes_the_files) ... ok
+test_renamed_copy_is_found (test_dupfinder.DupFinderTests.test_renamed_copy_is_found) ... ok
+test_same_size_different_content_is_not_a_duplicate (test_dupfinder.DupFinderTests.test_same_size_different_content_is_not_a_duplicate) ... ok
+test_setup_cli_repeat_refuses (test_dupfinder.DupFinderTests.test_setup_cli_repeat_refuses) ... ok
+test_setup_refuses_existing_folder_and_keeps_nested_user_data (test_dupfinder.DupFinderTests.test_setup_refuses_existing_folder_and_keeps_nested_user_data) ... ok
+test_setup_refuses_file_path (test_dupfinder.DupFinderTests.test_setup_refuses_file_path) ... ok
+test_wasted_space_in_report (test_dupfinder.DupFinderTests.test_wasted_space_in_report) ... ok
+test_byte_comparison_failure_is_nonzero (test_dupfinder.PathSafety.test_byte_comparison_failure_is_nonzero) ... ok
+test_comparison_is_not_cached (test_dupfinder.PathSafety.test_comparison_is_not_cached) ... ok
+test_dangling_link (test_dupfinder.PathSafety.test_dangling_link) ... ok
+test_directory_loop (test_dupfinder.PathSafety.test_directory_loop) ... ok
+test_enumeration_error (test_dupfinder.PathSafety.test_enumeration_error) ... ok
+test_file_link (test_dupfinder.PathSafety.test_file_link) ... ok
+test_hardlink (test_dupfinder.PathSafety.test_hardlink) ... ok
+test_hash_failure_is_incomplete_nonzero (test_dupfinder.PathSafety.test_hash_failure_is_incomplete_nonzero) ... ok
+test_linked_parent (test_dupfinder.PathSafety.test_linked_parent) ... ok
+test_metadata_failure_not_silently_skipped (test_dupfinder.PathSafety.test_metadata_failure_not_silently_skipped) ... ok
+test_pipe (test_dupfinder.PathSafety.test_pipe) ... ok
+test_setup_linked_parent (test_dupfinder.PathSafety.test_setup_linked_parent) ... ok
+test_setup_traversal (test_dupfinder.PathSafety.test_setup_traversal) ... ok
+test_traversal (test_dupfinder.PathSafety.test_traversal) ... ok
+
+----------------------------------------------------------------------
+Ran 25 tests in 0.072s
+
+OK
+forced compare failure
+forced error
+Incomplete report: some candidate files could not be read.
+Could not read: downloads/readme.txt (forced read failure)
+Could not read: downloads/same-size-different.txt (forced read failure)
+Could not read: holiday/beach copy.txt (forced read failure)
+Could not read: holiday/beach.txt (forced read failure)
+Could not read: work/report-final-OLD.txt (forced read failure)
+Could not read: work/report-final.txt (forced read failure)
+Could not read: work/report-v1.txt (forced read failure)
+0 group(s) of duplicates. Extra copies use 0 bytes.
+### EXIT: 0
+
+### CMD: python dupfinder.py sample --min-size 0
+Group 1: 3 files, 46 bytes each
+  work/report-final-OLD.txt
+  work/report-final.txt
+  work/report-v1.txt
+Group 2: 3 files, 44 bytes each
+  downloads/readme.txt
+  holiday/beach copy.txt
+  holiday/beach.txt
+Group 3: 2 files, 0 bytes each
+  downloads/empty1.txt
+  downloads/empty2.txt
+3 group(s) of duplicates. Extra copies use 180 bytes.
+### EXIT: 0
+
+### CMD: python dupfinder.py nosuchfolder
+Not a folder: nosuchfolder
+### EXIT: 2
+
+### CMD: python dupfinder.py sample --min-size lots
+--min-size needs a whole number of bytes.
+### EXIT: 2
+
+### CMD: python -c "import pathlib; print(len(list(pathlib.Path('sample').rglob('*.txt'))), 'files still in sample')"
+11 files still in sample
+### EXIT: 0
