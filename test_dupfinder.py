@@ -40,11 +40,42 @@ class DupFinderTests(unittest.TestCase):
         groups, _ = dupfinder.find_duplicates(self.root, min_size=0)
         self.assertIn("downloads/empty1.txt", sum(self.names(groups), []))
 
+    def snapshot(self):
+        return sorted((p.relative_to(self.root).as_posix(), p.is_dir(),
+                       p.stat().st_mtime_ns,
+                       p.read_bytes() if p.is_file() else None)
+                      for p in self.root.rglob("*"))
+
     def test_never_changes_the_files(self):
-        before = sorted(p.name for p in self.root.rglob("*"))
+        before = self.snapshot()
         dupfinder.find_duplicates(self.root)
-        after = sorted(p.name for p in self.root.rglob("*"))
-        self.assertEqual(before, after)
+        self.assertEqual(before, self.snapshot())
+
+    def test_setup_refuses_existing_folder_and_keeps_nested_user_data(self):
+        nested = self.root / "unrelated" / "deep.txt"
+        nested.parent.mkdir(); nested.write_bytes(b"KEEP")
+        before = self.snapshot()
+        with self.assertRaises(FileExistsError):
+            make_sample.make(self.root)
+        self.assertEqual(before, self.snapshot())
+
+    def test_setup_refuses_file_path(self):
+        path = Path(self.tmp.name) / "file"
+        path.write_bytes(b"KEEP")
+        before = (path.read_bytes(), path.stat().st_mtime_ns)
+        with self.assertRaises(FileExistsError):
+            make_sample.make(path)
+        self.assertEqual(before, (path.read_bytes(), path.stat().st_mtime_ns))
+
+    def test_setup_cli_repeat_refuses(self):
+        import shutil, subprocess, sys
+        script = Path(self.tmp.name) / "make_sample.py"
+        shutil.copyfile(Path(make_sample.__file__), script)
+        before = self.snapshot()
+        result = subprocess.run([sys.executable, str(script)], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Nothing was replaced or deleted", result.stderr)
+        self.assertEqual(before, self.snapshot())
 
     def test_missing_folder_is_a_clear_error(self):
         with self.assertRaises(NotADirectoryError):
