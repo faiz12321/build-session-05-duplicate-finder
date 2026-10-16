@@ -2,25 +2,62 @@
 
 Run: python dupfinder.py FOLDER [--min-size BYTES]
 """
-import filecmp
+import os
+import stat
 import hashlib
 import sys
 from collections import defaultdict
 from pathlib import Path
 
 
+def safe_input(value, directory=False):
+    path = Path(value).absolute()
+    if '..' in path.parts:
+        raise OSError('Parent-traversal paths are unsupported.')
+    for part in [*reversed(path.parents), path]:
+        info = part.lstat()
+        if stat.S_ISLNK(info.st_mode) or getattr(info, 'st_file_attributes', 0) & 0x400:
+            raise OSError('Links/reparse points are unsupported.')
+    info = path.lstat()
+    if directory:
+        if not stat.S_ISDIR(info.st_mode):
+            raise NotADirectoryError('Expected an ordinary directory.')
+    elif not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+        raise OSError('Expected an ordinary singly linked file.')
+    return path
+
+
 def list_files(folder):
-    """Every regular file under folder, in a stable order."""
-    root = Path(folder)
-    if not root.is_dir():
-        raise NotADirectoryError(f"Not a folder: {folder}")
-    return sorted(p for p in root.rglob("*") if p.is_file() and not p.is_symlink())
+    """Refuse unsupported paths and propagate traversal errors, with an entry cap."""
+    # Keep the prior missing-folder API shape for this teaching example.
+    if not Path(folder).exists():
+        raise NotADirectoryError(f'Not a folder: {folder}')
+    root = safe_input(folder, directory=True)
+    found = []
+    stack = [root]
+    count = 0
+    while stack:
+        current = safe_input(stack.pop(), directory=True)
+        with os.scandir(current) as entries:
+            ordered = sorted(entries, key=lambda entry: entry.name)
+        for entry in ordered:
+            count += 1
+            if count > 10000:
+                raise OSError('More than 10000 entries; refusing this tree.')
+            info = entry.stat(follow_symlinks=False)
+            directory = stat.S_ISDIR(info.st_mode)
+            child = safe_input(entry.path, directory=directory)
+            if directory:
+                stack.append(child)
+            else:
+                found.append(child)
+    return sorted(found)
 
 
 def file_hash(path, chunk=1024 * 1024):
-    """SHA-256 of the file contents, read in chunks so big files are fine."""
+    """SHA-256 of the file contents, read in chunks; this is not a resource sandbox."""
     digest = hashlib.sha256()
-    with open(path, "rb") as handle:
+    with open(safe_input(path), "rb") as handle:
         while True:
             block = handle.read(chunk)
             if not block:
@@ -31,7 +68,13 @@ def file_hash(path, chunk=1024 * 1024):
 
 def same_bytes(first, second):
     """True only if the two files are identical byte for byte."""
-    return filecmp.cmp(first, second, shallow=False)
+    with safe_input(first).open('rb') as a, safe_input(second).open('rb') as b:
+        while True:
+            left, right = a.read(1024 * 1024), b.read(1024 * 1024)
+            if left != right:
+                return False
+            if not left:
+                return True
 
 
 def confirm_groups(paths):
@@ -59,10 +102,7 @@ def find_duplicates(folder, min_size=1):
     """
     by_size = defaultdict(list)
     for path in list_files(folder):
-        try:
-            size = path.stat().st_size
-        except OSError:
-            continue
+        size = safe_input(path).stat().st_size
         if size >= min_size:
             by_size[size].append(path)
 
@@ -88,8 +128,8 @@ def find_duplicates(folder, min_size=1):
 
 
 def report(folder, groups, skipped):
-    root = Path(folder)
-    lines = []
+    root = Path(folder).absolute()
+    lines = ["Incomplete report: some candidate files could not be read."] if skipped else []
     wasted = 0
     for number, (size, paths) in enumerate(groups, start=1):
         wasted += size * (len(paths) - 1)
@@ -118,11 +158,11 @@ def main(argv):
         return 2
     try:
         groups, skipped = find_duplicates(args[0], min_size)
-    except NotADirectoryError as error:
+    except OSError as error:
         print(error)
         return 2
     print(report(args[0], groups, skipped))
-    return 0
+    return 2 if skipped else 0
 
 
 if __name__ == "__main__":
