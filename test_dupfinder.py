@@ -96,5 +96,73 @@ class DupFinderTests(unittest.TestCase):
         self.assertEqual(len(groups), 2)
 
 
+class PathSafety(unittest.TestCase):
+    def setUp(self):
+        import os
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.base = Path(self.tmp.name)
+        self.root = self.base/'sample'
+        make_sample.make(self.root)
+    def link(self, path, target, directory=False):
+        try: path.symlink_to(target, target_is_directory=directory)
+        except OSError: self.skipTest('Symlink creation unavailable')
+    def test_file_link(self):
+        self.link(self.root/'linked', self.root/'work'/'notes.txt')
+        with self.assertRaises(OSError): dupfinder.find_duplicates(self.root)
+    def test_directory_loop(self):
+        self.link(self.root/'loop', self.root, True)
+        with self.assertRaises(OSError): dupfinder.find_duplicates(self.root)
+    def test_dangling_link(self):
+        self.link(self.root/'linked', self.root/'missing')
+        with self.assertRaises(OSError): dupfinder.find_duplicates(self.root)
+    def test_linked_parent(self):
+        self.link(self.base/'linked', self.root, True)
+        with self.assertRaises(OSError): dupfinder.find_duplicates(self.base/'linked'/'work')
+    def test_hardlink(self):
+        import os
+        os.link(self.root/'work'/'notes.txt', self.root/'hard')
+        with self.assertRaises(OSError): dupfinder.find_duplicates(self.root)
+    def test_pipe(self):
+        import os
+        if not hasattr(os,'mkfifo'): self.skipTest('Unix pipe unavailable')
+        os.mkfifo(self.root/'pipe')
+        with self.assertRaises(OSError): dupfinder.find_duplicates(self.root)
+    def test_traversal(self):
+        with self.assertRaises(OSError): dupfinder.find_duplicates(self.root/'..'/'sample')
+    def test_enumeration_error(self):
+        with mock.patch('os.scandir', side_effect=OSError('forced error')):
+            with self.assertRaises(OSError): dupfinder.find_duplicates(self.root)
+            self.assertEqual(dupfinder.main([str(self.root)]),2)
+    def test_metadata_failure_not_silently_skipped(self):
+        real = dupfinder.safe_input
+        def fail(path,*args,**kwargs):
+            if str(path).endswith('notes.txt'): raise OSError('forced metadata error')
+            return real(path,*args,**kwargs)
+        with mock.patch.object(dupfinder,'safe_input',side_effect=fail):
+            with self.assertRaises(OSError): dupfinder.find_duplicates(self.root)
+    def test_comparison_is_not_cached(self):
+        a=self.base/'a';b=self.base/'b';a.write_bytes(b'aa');b.write_bytes(b'aa')
+        self.assertTrue(dupfinder.same_bytes(a,b))
+        import os
+        old=b.stat();b.write_bytes(b'bb');os.utime(b,ns=(old.st_atime_ns,old.st_mtime_ns))
+        self.assertFalse(dupfinder.same_bytes(a,b))
+    def test_setup_linked_parent(self):
+        self.link(self.base/'linked',self.root,True)
+        with self.assertRaises(OSError):make_sample.make(self.base/'linked'/'new')
+    def test_setup_traversal(self):
+        with self.assertRaises(OSError):make_sample.make(self.root/'..'/'new')
+
+    def test_hash_failure_is_incomplete_nonzero(self):
+        with mock.patch.object(dupfinder, 'file_hash', side_effect=OSError('forced read failure')):
+            groups, skipped = dupfinder.find_duplicates(self.root)
+            self.assertTrue(skipped)
+            self.assertIn('Incomplete report',dupfinder.report(self.root,groups,skipped))
+            self.assertEqual(dupfinder.main([str(self.root)]),2)
+    def test_byte_comparison_failure_is_nonzero(self):
+        with mock.patch.object(dupfinder, 'same_bytes', side_effect=OSError('forced compare failure')):
+            self.assertEqual(dupfinder.main([str(self.root)]),2)
+
+
 if __name__ == "__main__":
     unittest.main()
