@@ -4,6 +4,7 @@ Run: python make_sample.py
 It makes a folder called sample/ next to this script. Refuses any existing sample path. Never resets or replaces it.
 """
 from pathlib import Path
+import stat
 
 FILES = {
     "holiday/beach.txt": "Beach day notes: sunscreen, towels, snacks.\n",
@@ -21,7 +22,13 @@ FILES = {
 
 
 def make(root):
-    root = Path(root)
+    root = Path(root).absolute()
+    if '..' in root.parts:
+        raise OSError('Parent-traversal paths are unsupported.')
+    for parent in reversed(root.parents):
+        info = parent.lstat()
+        if stat.S_ISLNK(info.st_mode) or getattr(info, 'st_file_attributes', 0) & 0x400:
+            raise OSError('Linked/reparse parents are unsupported.')
     root.mkdir()  # Atomic refusal if any file, folder or link already exists.
     for name, text in FILES.items():
         path = root / name
@@ -32,7 +39,7 @@ def make(root):
 
 
 if __name__ == "__main__":
-    here = Path(__file__).resolve().parent
+    here = Path(__file__).absolute().parent
     try:
         count = make(here / "sample")
     except FileExistsError:
